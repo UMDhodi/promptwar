@@ -1,24 +1,42 @@
-# Logs
-logs
-*.log
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env*.local
+frontend/.env
+frontend/.env.local
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+backend/venv/
+*.egg-info/
+dist/
+build/
+backend/error_log.txt
+backend/test_models.py
+
+# Node
+node_modules/
+frontend/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Build outputs
+frontend/dist/
+frontend/.vite/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Logs
+*.log
+logs/

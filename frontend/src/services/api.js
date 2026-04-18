@@ -3,11 +3,16 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 export async function chatWithAssistant(message, userContext = {}, history = []) {
   try {
     console.log("API URL:", API_BASE);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, userContext, history })
+      body: JSON.stringify({ message, userContext, history }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     
     console.log("Response status:", res.status);
     if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);

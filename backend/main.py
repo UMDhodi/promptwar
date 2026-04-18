@@ -3,8 +3,8 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.request
 import urllib.error
+import traceback
 
-# Quick manual .env parser to avoid python-dotenv dependency
 def load_env():
     try:
         with open("../.env", "r") as f:
@@ -61,7 +61,7 @@ class SimpleGeminiHandler(BaseHTTPRequestHandler):
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
                  fallback = {
-                     "response": "I'm having trouble connecting right now. Missing API key! Based on live data: nearest restroom is R2 (South). 🚻",
+                     "response": "I'm having trouble connecting right now. Missing API key!",
                      "suggested_actions": [],
                      "map_highlight": "R2"
                  }
@@ -80,8 +80,7 @@ class SimpleGeminiHandler(BaseHTTPRequestHandler):
                 formatted_history += f"{role}: {content}\n"
                 
             full_prompt = f"{system_prompt}\n\nHistory:\n{formatted_history}\nUser: {message}\nAssistant (JSON):"
-            
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
             payload = json.dumps({
                 "contents": [{"parts": [{"text": full_prompt}]}],
                 "generationConfig": {"temperature": 0.2}
@@ -90,7 +89,7 @@ class SimpleGeminiHandler(BaseHTTPRequestHandler):
             req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
             
             try:
-                with urllib.request.urlopen(req) as response:
+                with urllib.request.urlopen(req, timeout=5.0) as response:
                     resp_data = json.loads(response.read().decode('utf-8'))
                     text = resp_data["candidates"][0]["content"]["parts"][0]["text"]
                     text = text.replace("```json", "").replace("```", "").strip()
@@ -107,10 +106,28 @@ class SimpleGeminiHandler(BaseHTTPRequestHandler):
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
                     self.wfile.write(json.dumps(final_resp).encode('utf-8'))
+            except urllib.error.HTTPError as e:
+                err_msg = e.read().decode('utf-8')
+                print("Gemini HTTP Error:", err_msg)
+                with open("error_log.txt", "w") as f:
+                    f.write(err_msg)
+                fallback = {
+                     "response": f"HTTP Error {e.code}. Check error_log.txt",
+                     "suggested_actions": [],
+                     "map_highlight": "G2"
+                }
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps(fallback).encode('utf-8'))
             except Exception as e:
+                err_str = traceback.format_exc()
+                with open("error_log.txt", "w") as f:
+                    f.write(err_str)
                 print("Gemini API Error:", e)
                 fallback = {
-                     "response": "Connectivity error. Utilizing cached instructions: South Gate is clear! 🚪",
+                     "response": "Connectivity error. Check error_log.txt internally.",
                      "suggested_actions": [],
                      "map_highlight": "G2"
                 }
