@@ -40,15 +40,15 @@ export async function chatWithAssistant(message, userContext = {}, history = [])
         };
     }
 
-    if (msgLower.includes('parking') || msgLower.includes('lot')) {
+    if (msgLower.includes('parking') || msgLower.includes('lot') || msgLower.includes('car')) {
         return {
            response: "I'm offline right now. South Lot currently shows 800 free spots and a 5 min exit queue. 🅿️",
            suggested_actions: [{label: "Best Exit", query: "What is the best way out?"}],
-           map_highlight: "P2"
+           map_highlight: "P1"
         };
     }
     
-    if (msgLower.includes('food') || msgLower.includes('eat') || msgLower.includes('concession')) {
+    if (msgLower.includes('food') || msgLower.includes('eat') || msgLower.includes('concession') || msgLower.includes('hungry') || msgLower.includes('drink')) {
         return {
            response: "Lost connection to the backend. The closest food to South Stand is South Kiosks — 4 min wait. 🍔",
            suggested_actions: [{label: "Find Restrooms", query: "Where are the closest restrooms?"}],
