@@ -85,7 +85,7 @@ function App() {
 
         {/* MIDDLE: Venue Map */}
         <div className={`flex-1 relative ${activeTab === 'map' ? 'block' : 'hidden md:block'}`}>
-           <VenueMap mapHighlight={mapHighlight} isAccessibleFilter={isAccessible} />
+           <VenueMap mapHighlight={mapHighlight} isAccessibleFilter={isAccessible} isBlocked={showOnboarding} />
         </div>
 
         {/* RIGHT: Status Dashboard */}

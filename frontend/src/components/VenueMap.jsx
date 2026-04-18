@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import { ZoomIn, ZoomOut, Maximize, Navigation } from 'lucide-react';
 
-export default function VenueMap({ mapHighlight, isAccessibleFilter }) {
+export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked = false }) {
   const { venueData, loading } = useFirestore();
 
   const [zoom, setZoom] = useState(1);
@@ -137,13 +137,18 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter }) {
     <div className="relative w-full h-full bg-[#E5E9F0] overflow-hidden"
          onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
          
-      <div className="absolute top-4 right-4 z-50 flex flex-col space-y-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-xl border border-gray-200 shadow-sm">
+      {/* Zoom Controls — hidden while onboarding */}
+      {!isBlocked && (
+      <div className="absolute top-4 right-4 z-40 flex flex-col space-y-2 bg-white/90 backdrop-blur-sm p-1.5 rounded-xl border border-gray-200 shadow-sm">
         <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" onClick={() => setZoom(z => Math.min(z + 0.25, 3))}><ZoomIn className="w-5 h-5"/></button>
         <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))}><ZoomOut className="w-5 h-5" /></button>
         <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors" onClick={resetMap}><Maximize className="w-5 h-5"/></button>
       </div>
+      )}
 
-      <div className="absolute bottom-4 left-4 bg-white/95 p-3 rounded-xl shadow-lg backdrop-blur-sm border border-gray-100 z-50 max-w-[200px]">
+      {/* Crowd Density Legend — hidden while onboarding */}
+      {!isBlocked && (
+      <div className="absolute bottom-4 left-4 bg-white/95 p-3 rounded-xl shadow-lg backdrop-blur-sm border border-gray-100 z-40 max-w-[200px]">
          <h4 className="text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2">Crowd Density Layer</h4>
          <div className="flex flex-col space-y-2 text-xs font-semibold text-gray-700">
            <div className="flex items-center group"><div className="w-4 h-4 rounded-full bg-green-400 border border-green-500 mr-2 shadow-inner"></div> 0-60%</div>
@@ -151,6 +156,7 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter }) {
            <div className="flex items-center group"><div className="w-4 h-4 rounded-full bg-red-500 border border-red-600 mr-2 shadow-inner"></div> &gt;80%</div>
          </div>
       </div>
+      )}
 
       <div className="absolute inset-0 transition-transform duration-75 origin-center"
            style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, cursor: isDragging ? 'grabbing' : 'grab' }}>
