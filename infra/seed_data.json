@@ -1,0 +1,41 @@
+{
+  "venue": {
+    "name": "Apex Arena",
+    "total_capacity": 60000,
+    "center_lat": 28.6139,
+    "center_lng": 77.2090,
+    "gates": [
+      {"id": "G1", "name": "North Gate", "lat": 28.6155, "lng": 77.2090, "type": "main"},
+      {"id": "G2", "name": "South Gate", "lat": 28.6123, "lng": 77.2090, "type": "main"},
+      {"id": "G3", "name": "East Gate", "lat": 28.6139, "lng": 77.2112, "type": "premium"},
+      {"id": "G4", "name": "West Gate", "lat": 28.6139, "lng": 77.2068, "type": "accessible"}
+    ],
+    "zones": [
+      {"id": "Z1", "name": "North Stand", "capacity": 15000, "current_occupancy": 12000},
+      {"id": "Z2", "name": "South Stand", "capacity": 15000, "current_occupancy": 8000},
+      {"id": "Z3", "name": "East Premium", "capacity": 10000, "current_occupancy": 9500},
+      {"id": "Z4", "name": "West Family", "capacity": 10000, "current_occupancy": 6000},
+      {"id": "Z5", "name": "Concourse Level", "capacity": 10000, "current_occupancy": 4500}
+    ],
+    "concessions": [
+      {"id": "C1", "name": "North Food Court", "zone": "Z1", "wait_minutes": 12, "lat": 28.6150, "lng": 77.2085},
+      {"id": "C2", "name": "South Kiosks", "zone": "Z2", "wait_minutes": 4, "lat": 28.6128, "lng": 77.2088},
+      {"id": "C3", "name": "East Bar", "zone": "Z3", "wait_minutes": 18, "lat": 28.6142, "lng": 77.2108},
+      {"id": "C4", "name": "West Family Zone", "zone": "Z4", "wait_minutes": 6, "lat": 28.6136, "lng": 77.2072}
+    ],
+    "restrooms": [
+      {"id": "R1", "zone": "Z1", "wait_minutes": 8, "accessible": true, "lat": 28.6152, "lng": 77.2092},
+      {"id": "R2", "zone": "Z2", "wait_minutes": 2, "accessible": true, "lat": 28.6125, "lng": 77.2092},
+      {"id": "R3", "zone": "Z3", "wait_minutes": 15, "accessible": false, "lat": 28.6140, "lng": 77.2110},
+      {"id": "R4", "zone": "Z4", "wait_minutes": 3, "accessible": true, "lat": 28.6138, "lng": 77.2070}
+    ],
+    "medical_posts": [
+      {"id": "M1", "lat": 28.6145, "lng": 77.2080, "24hr": true},
+      {"id": "M2", "lat": 28.6133, "lng": 77.2098, "24hr": false}
+    ],
+    "parking": [
+      {"id": "P1", "name": "North Lot", "capacity": 2000, "available": 340, "lat": 28.6170, "lng": 77.2090},
+      {"id": "P2", "name": "South Lot", "capacity": 1500, "available": 800, "lat": 28.6108, "lng": 77.2090}
+    ]
+  }
+}

@@ -1,37 +1,68 @@
-# StadiumSync AI
+# StadiumIQ — Smart Venue Assistant
 
-A smart, dynamic assistant and load-balancing platform designed to improve the physical event experience at large-scale sporting venues.
+## Vertical
+Large-scale sporting event attendee experience: crowd management, wait-time reduction, real-time navigation.
 
-## Vertical Chosen: Sports Tech & Event Management
+## Approach & Logic
+StadiumIQ combines Gemini AI (contextual reasoning) + live Firestore data (real-time venue state) + Google Maps (spatial navigation) to give attendees a personal stadium guide in their pocket.
 
-### Approach and Logic
-Large stadiums suffer from severe localized congestion, creating massive wait times for restrooms and concessions while other facilities sit empty. **StadiumSync AI** aims to solve this by providing attendees with a contextual smart assistant.
+**Decision flow:**
+1. User asks question or taps quick action
+2. Backend fetches live venue state from Firestore
+3. Gemini receives: user message + full venue context (crowd density, wait times, user location/seat/accessibility needs)
+4. Gemini returns: natural language answer + structured actions + map highlight point
+5. Frontend updates chat, pulses map marker, shows quick-reply chips
 
-Instead of passively displaying wait times, our system uses **Google Gemini AI** to act as a digital concierge. The AI receives real-time context—such as the user’s exact seat location, ticket tier, and current wait times at various stadium zones—and actively distributes crowd flow by recommending the most efficient paths. It dynamically reroutes attendees based on load.
+**Crowd engine logic:**
+- Density score = occupancy/capacity × 100
+- Movement risk multiplier at halftime/event-end = 1.5×
+- Routing avoids zones >70% density
+- Predictions use 5-reading linear extrapolation
 
-### How it Works
-1. **Contextual Awareness**: The app simulated linking to the user's ticket (e.g., Sector 112).
-2. **Real-time Map Visualization**: An interactive interface overlays data mimicking **Google Maps APIs** and **Firebase Realtime Database** to show which concession stands and restrooms are currently heavily congested (Red) vs open (Green).
-3. **Gemini Assistant**: Attendees can chat natively naturally (e.g., "I'm hungry, what's quick?"). The model combines the user's location with the live stadium metrics to guide them strictly to the *least congested* options, ensuring global load balancing.
+## How It Works
+1. User opens app → anonymous Firebase auth → enters seat number + accessibility preference
+2. Map shows live heatmap of crowd density across all zones
+3. Chat with Gemini: "Where's the shortest food queue?" → gets specific concession + walking route
+4. Wait Time dashboard shows all facilities ranked by queue length
+5. Real-time alerts pushed via FCM for crowd surges, gate delays, emergencies
 
-### Assumptions Made
-- The deployment environment allows access to Google Cloud Services (specifically Gemini API and Cloud Firestore).
-- The stadium is geofenced with zones that have trackable load metrics (e.g., via turnstiles, wifi triangulation, or smart cameras).
-- Users will scan a QR code at their seat to open this Progressive Web App (PWA).
+## Google Services Used
+| Service | Usage |
+|---------|-------|
+| Vertex AI (Gemini 1.5 Flash) | Conversational assistant + decision engine |
+| Google Maps JS API | Interactive venue map |
+| Google Routes API | Walking navigation inside venue |
+| Maps Heatmap Layer | Real-time crowd density visualization |
+| Cloud Firestore | Real-time venue state + user profiles |
+| Firebase Auth | Anonymous + Google Sign-In |
+| Firebase Hosting | Frontend deployment |
+| Cloud Run | Backend API hosting |
+| Firebase Cloud Messaging | Push alerts |
+| Secret Manager | API key security |
+| Cloud Build | CI/CD pipeline |
+| BigQuery | (Schema ready) Analytics + crowd pattern storage |
 
-### Technical Choices
-- **React (Vite) & Vanilla CSS**: To keep the final repository extremely lightweight (well under 1 MB source-code) while affording maximum modularity and flexibility.
-- **Glassmorphism Aesthetic**: Deliberately designed to offer a sleek, "wow" factor premium interface without heavy component libraries.
+## Assumptions
+- Venue staff update zone occupancy via separate admin interface (simulated by seed + background job)
+- Google Routes API used for pedestrian routing approximation inside venue
+- Single active event per venue at a time
+- Mobile-first: most users on phone inside stadium
+- Anonymous auth sufficient for 90% of features; sign-in only needed to save preferences
 
-### Setup Instructions
-1. Install dependencies: `npm install`
-2. Start the dev server: `npm run dev`
-3. Optional: Add your Google Gemini API key into an `.env` file as `VITE_GEMINI_API_KEY` to enable actual AI responses. Otherwise, it safely falls back to local AI mocking.
+## Local Dev Setup
+```bash
+# Backend
+cd backend && pip install -r requirements.txt
+export GOOGLE_CLOUD_PROJECT=your-project-id
+uvicorn main:app --reload
 
----
+# Frontend  
+cd frontend && npm install
+echo "VITE_MAPS_API_KEY=your-key" > .env.local
+npm run dev
+```
 
-### Evaluation Criteria Mappings
-- **Code Quality**: Highly modular architecture decoupled into logical `components/` and `services/`.
-- **Security**: `.env` implementation ensuring API keys do not leak into the repository.
-- **Efficiency**: Under 1 MB repo size constraint met. Asset-less UI (CSS gradients + lucide-react SVGs only).
-- **Google Services**: Integration architecture laid out for Firebase and Google GenAI.
+## Testing
+```bash
+cd backend && pytest tests/ -v
+```
