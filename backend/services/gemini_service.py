@@ -2,7 +2,6 @@ import os
 import json
 import logging
 import httpx
-from typing import Dict, List, Any
 from dotenv import load_dotenv
 
 # Load env variables from root .env if running from backend
