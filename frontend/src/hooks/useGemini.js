@@ -266,7 +266,6 @@ export function useGemini() {
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, venueData]); // messagesRef intentionally omitted — always current via ref
 
   return { messages, sendMessage, isLoading, suggestedActions, mapHighlight };

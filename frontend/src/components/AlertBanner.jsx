@@ -1,20 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Bell, AlertTriangle, AlertCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function AlertBanner() {
-  const [alerts, setAlerts] = useState([]);
+  const [alerts] = useState(() => [
+     { id: "A1", type: "GATE_DELAY", message: "North Gate experiencing 20 min delay — use West Gate for faster entry." },
+     { id: "A2", type: "CROWD_HIGH", message: "East Premium Stand is at 92% capacity. West Family Zone has space!" },
+     { id: "A3", type: "EVENT_UPDATE", message: "⚽ 2nd Half kicks off in 3 minutes — return to your seats!" },
+     { id: "A4", type: "EVENT_UPDATE", message: "Concessions on North concourse closing 10 mins before final whistle." }
+  ]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-     // Mocking Alerts to show carousel functionality
-     setAlerts([
-         { id: "A1", type: "GATE_DELAY", message: "North Gate experiencing 20 min delay — use West Gate for faster entry." },
-         { id: "A2", type: "CROWD_HIGH", message: "East Premium Stand is at 92% capacity. West Family Zone has space!" },
-         { id: "A3", type: "EVENT_UPDATE", message: "⚽ 2nd Half kicks off in 3 minutes — return to your seats!" },
-         { id: "A4", type: "EVENT_UPDATE", message: "Concessions on North concourse closing 10 mins before final whistle." }
-     ]);
-  }, []);
 
   if (!alerts.length || !isVisible) return null;
 

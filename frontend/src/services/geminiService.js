@@ -1,4 +1,3 @@
-import { mockWaitTimes } from './firebaseConfig';
 import { GoogleGenAI } from '@google/genai';
 
 // Replace with your actual Gemini API key for production

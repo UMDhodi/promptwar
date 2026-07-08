@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock fetch globally — backend not available in test env
-global.fetch = vi.fn(() => Promise.reject(new Error('Network unavailable in test')));
+globalThis.fetch = vi.fn(() => Promise.reject(new Error('Network unavailable in test')));
 
 import { chatWithAssistant } from '../services/api';
 
@@ -15,7 +15,7 @@ describe('chatWithAssistant — offline intent fallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Ensure fetch always fails so fallback always runs in tests
-    global.fetch = vi.fn(() => Promise.reject(new Error('Network unavailable')));
+    globalThis.fetch = vi.fn(() => Promise.reject(new Error('Network unavailable')));
   });
 
   it('returns a valid response object shape', async () => {

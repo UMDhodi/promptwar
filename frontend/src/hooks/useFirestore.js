@@ -80,9 +80,9 @@ function venueFingerprint(data) {
  * @returns {{ venueData: Object, loading: boolean, lastUpdated: Date|null }}
  */
 export function useFirestore() {
-  const [venueData, setVenueData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [venueData, setVenueData] = useState(() => JSON.parse(JSON.stringify(SEED_DATA)));
+  const [loading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const intervalRef = useRef(null);
 
   const applySimulatedUpdate = useCallback(() => {
@@ -114,10 +114,7 @@ export function useFirestore() {
   }, []);
 
   useEffect(() => {
-    // Initialize with seed data
-    setVenueData(JSON.parse(JSON.stringify(SEED_DATA)));
-    setLoading(false);
-    setLastUpdated(new Date());
+    // track initial load
     trackEvent('venue_data_load', { source: 'seed' });
 
     // Simulate 30s Firestore updates

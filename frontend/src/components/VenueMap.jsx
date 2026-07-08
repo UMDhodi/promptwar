@@ -18,17 +18,18 @@ import {
 function HeatmapCanvas({ zones, visible }) {
   const canvasRef = useRef(null);
 
-  const zonesFingerprint = JSON.stringify(zones?.map(z => ({ id: z.id, occ: z.current_occupancy, cap: z.capacity })));
+  const zonesFingerprint = JSON.stringify(zones?.map(z => ({ id: z.id, occ: z.current_occupancy, cap: z.capacity })) || []);
 
   useEffect(() => {
-    if (!visible || !canvasRef.current || !zones) return;
+    if (!visible || !canvasRef.current || !zonesFingerprint) return;
+    const parsedZones = JSON.parse(zonesFingerprint);
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, 900, 900);
 
-    zones.forEach(zone => {
+    parsedZones.forEach(zone => {
       if (!ZONE_HOTSPOTS[zone.id]) return;
-      const density = zone.current_occupancy / zone.capacity;
+      const density = zone.occ / zone.cap;
       const r = Math.round(density > 0.75 ? 255 : density > 0.55 ? 255 : 34);
       const g = Math.round(density > 0.75 ? Math.max(0, 165 - density * 100) : density > 0.55 ? 165 : 197);
       const b = 34;
@@ -68,20 +69,16 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart]   = useState({ x: 0, y: 0 });
   const [activePopup, setActivePopup]       = useState(null);
-  const [navigationTarget, setNavTarget]    = useState(null);
+  const [userSelectedNavTarget, setUserSelectedNavTarget] = useState(null);
   const [showHeatmap, setShowHeatmap]       = useState(false);
   const [showZoneLabels, setShowZoneLabels] = useState(true);
   const [activeLayer, setActiveLayer]       = useState('density'); // 'density' | 'wait'
 
-  /* Drag handlers */
-  const handleMouseDown = (e) => { setIsDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }); };
-  const handleMouseMove = (e) => { if (!isDragging) return; setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); };
-  const handleMouseUp   = () => setIsDragging(false);
-  const resetMap        = () => { setZoom(1); setOffset({ x: 0, y: 0 }); setActivePopup(null); setNavTarget(null); };
-
-  /* Sync highlight → navigation arrow */
-  useEffect(() => {
-    if (!mapHighlight || !venueData) { setNavTarget(null); return; }
+  // Derive navigationTarget statically during render to prevent state cascading and satisfy the React 19 compiler
+  let navigationTarget = null;
+  if (userSelectedNavTarget) {
+    navigationTarget = userSelectedNavTarget;
+  } else if (mapHighlight && venueData) {
     const cats   = ['gates','concessions','restrooms','medical_posts','parking'];
     const mapped = ['Gates','Concessions','Restrooms','Medical','Parking'];
     for (let i = 0; i < cats.length; i++) {
@@ -90,21 +87,18 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
         const idx = arr.findIndex(f => f.id === mapHighlight);
         if (idx !== -1) {
           const pos = POSITIONS[mapped[i]][idx % POSITIONS[mapped[i]].length];
-          setNavTarget({ id: mapHighlight, ...pos });
-          return;
+          navigationTarget = { id: mapHighlight, ...pos };
+          break;
         }
       }
     }
-  }, [mapHighlight, venueData]);
+  }
 
-  if (loading || !venueData) return (
-    <div className="w-full h-full flex items-center justify-center bg-slate-900">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin" />
-        <span className="text-green-300 font-semibold text-sm tracking-widest uppercase">Loading Stadium…</span>
-      </div>
-    </div>
-  );
+  /* Drag handlers */
+  const handleMouseDown = (e) => { setIsDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }); };
+  const handleMouseMove = (e) => { if (!isDragging) return; setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); };
+  const handleMouseUp   = () => setIsDragging(false);
+  const resetMap        = () => { setZoom(1); setOffset({ x: 0, y: 0 }); setActivePopup(null); setUserSelectedNavTarget(null); };
 
   /* ── Facility marker ── */
   const renderMarker = useCallback((facility, type, pos) => {
@@ -142,7 +136,7 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
             </div>
             {facility.accessible && <div className="text-[10px] text-blue-500 font-bold mt-0.5">♿ Accessible</div>}
             <button
-              onClick={(e) => { e.stopPropagation(); setNavTarget({ id: facility.id, x: pos.x, y: pos.y }); setActivePopup(null); }}
+              onClick={(e) => { e.stopPropagation(); setUserSelectedNavTarget({ id: facility.id, x: pos.x, y: pos.y }); setActivePopup(null); }}
               className="mt-2.5 w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-1"
             >
               <Navigation className="w-3 h-3" /> Navigate
@@ -153,6 +147,15 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
       </div>
     );
   }, [isAccessibleFilter, mapHighlight, navigationTarget, activePopup]);
+
+  if (loading || !venueData) return (
+    <div className="w-full h-full flex items-center justify-center bg-slate-900">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin" />
+        <span className="text-green-300 font-semibold text-sm tracking-widest uppercase">Loading Stadium…</span>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -394,7 +397,7 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
             <svg viewBox="0 0 900 900" className="absolute inset-0 w-full h-full pointer-events-none">
               {venueData.zones?.filter(z => ZONE_PATHS[z.id]).map(zone => {
                 const pct = (zone.current_occupancy / zone.capacity) * 100;
-                const { fill, label } = densityToColor(pct);
+                const { fill } = densityToColor(pct);
                 return (
                   <g key={zone.id}>
                     <path d={ZONE_PATHS[zone.id]} fill={fill} opacity="0.35"/>

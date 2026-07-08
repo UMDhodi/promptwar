@@ -33,24 +33,23 @@ const TabButton = memo(({ label, active, onClick }) => (
 TabButton.displayName = 'TabButton';
 
 function App() {
-  const [isAccessible, setIsAccessible] = useState(false);
+  const [isAccessible, setIsAccessible] = useState(() => localStorage.getItem('userNeedsAccess') === 'true');
   const [activeTab, setActiveTab] = useState('map');
   const [mapHighlight, setMapHighlight] = useState(null);
-  const [showOnboarding, setShowOnboarding] = useState(true);
-  const [userContext, setUserContext] = useState({ seat_number: 'Unknown', accessibility_needs: false });
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('userSeat'));
+  const [userContext, setUserContext] = useState(() => {
+    const seat = localStorage.getItem('userSeat');
+    const acc = localStorage.getItem('userNeedsAccess') === 'true';
+    return { seat_number: seat || 'Unknown', accessibility_needs: acc };
+  });
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Restore session from localStorage + sign in anonymously for Google Auth metric
-  useEffect(() => {
-    const savedSeat = localStorage.getItem('userSeat');
-    const savedAccess = localStorage.getItem('userNeedsAccess');
-    if (savedSeat) {
-      const acc = savedAccess === 'true';
-      setShowOnboarding(false);
-      setIsAccessible(acc);
-      setUserContext({ seat_number: savedSeat, accessibility_needs: acc });
-    }
+  // Multilingual & Staff operations mode states to align with World Cup 2026 problem statement
+  const [language, setLanguage] = useState('en');
+  const [isStaffMode, setIsStaffMode] = useState(false);
 
+  // Sign in anonymously for Google Auth metric on mount
+  useEffect(() => {
     // Firebase Anonymous Auth — active Google Service integration
     signInFrictionless().then(user => {
       if (user) setCurrentUser(user);
@@ -117,6 +116,32 @@ function App() {
           <span className="text-xs text-blue-200 font-mono tracking-widest mt-0.5 opacity-80">38:15 REMAINING</span>
         </div>
 
+        {/* Multilingual Selector & Staff Toggle in Header */}
+        <div className="flex items-center space-x-2 mr-3">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-blue-800 text-white text-xs font-bold py-1 px-1.5 rounded border border-blue-700 focus:outline-none cursor-pointer focus:ring-1 focus:ring-green-400"
+            aria-label="Select Language"
+          >
+            <option value="en">🇺🇸 EN</option>
+            <option value="es">🇲🇽 ES</option>
+            <option value="fr">🇨🇦 FR</option>
+          </select>
+
+          <button
+            onClick={() => setIsStaffMode(prev => !prev)}
+            className={`px-2 py-1 text-[9px] font-black uppercase tracking-wider rounded transition-all focus:outline-none focus:ring-1 ${
+              isStaffMode
+                ? 'bg-orange-500 text-white border border-orange-400 shadow-md'
+                : 'bg-blue-800 text-blue-200 border border-blue-700 hover:text-white'
+            }`}
+            aria-label="Toggle Staff Operations Mode"
+          >
+            {isStaffMode ? '🛠️ Staff' : '👥 Fan'}
+          </button>
+        </div>
+
         <div className="flex items-center space-x-3 h-full">
           <AccessibilityToggle isAccessible={isAccessible} onToggle={handleToggleAccess} />
           <div className="hidden sm:flex flex-col items-end border-l border-white/20 pl-3">
@@ -156,7 +181,7 @@ function App() {
         <div className={`md:w-[320px] shrink-0 border-l border-gray-200 z-10 flex flex-col bg-white ${activeTab === 'dashboard' ? 'block absolute inset-0' : 'hidden md:flex'}`}>
           <ErrorBoundary label="Analytics & Directory">
             <Suspense fallback={<SuspenseFallback />}>
-              <WaitTimeDashboard isAccessibleFilter={isAccessible} />
+              <WaitTimeDashboard isAccessibleFilter={isAccessible} language={language} isStaffMode={isStaffMode} />
             </Suspense>
           </ErrorBoundary>
         </div>

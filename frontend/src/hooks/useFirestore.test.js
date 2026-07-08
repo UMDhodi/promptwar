@@ -95,8 +95,6 @@ describe('useFirestore', () => {
     const { result } = renderHook(() => useFirestore());
     await act(async () => {});
 
-    const initialWait = result.current.venueData.gates[0].wait_minutes;
-    
     // Run 30 seconds of fake time
     await act(async () => {
       vi.advanceTimersByTime(30001);

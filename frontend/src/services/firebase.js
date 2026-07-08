@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, enableNetwork, disableNetwork } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getAnalytics, logEvent, isSupported } from 'firebase/analytics';
 import { getPerformance } from 'firebase/performance';
 
@@ -35,7 +35,9 @@ isSupported().then(supported => {
 let perf = null;
 try {
   perf = getPerformance(app);
-} catch (_) {}
+} catch {
+  console.warn("Firebase Performance monitoring not supported or blocked");
+}
 
 export { app, analytics, perf };
 

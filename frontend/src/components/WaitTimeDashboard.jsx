@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, memo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import {
   Clock, Utensils, Droplet, ArrowRightCircle, Car, HeartPulse,
@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 
 /* ─── colour helpers ─────────────────────────────────────────── */
-const waitBg   = w => w > 15 ? 'bg-red-500'    : w > 5 ? 'bg-amber-400'   : 'bg-emerald-500';
 const waitText = w => w > 15 ? 'text-red-600'  : w > 5 ? 'text-amber-600' : 'text-emerald-600';
 const waitBgSoft = w => w > 15 ? 'bg-red-50'   : w > 5 ? 'bg-amber-50'    : 'bg-emerald-50';
 const densityBg  = p => p >= 90 ? 'bg-red-500' : p >= 75 ? 'bg-orange-400' : p >= 55 ? 'bg-amber-400' : 'bg-emerald-500';
@@ -30,27 +29,31 @@ function MiniBar({ pct, color = '#3b82f6' }) {
 /**
  * SparkLine — mini SVG line chart showing the last 8 data ticks.
  *
- * The random history is seeded once on mount (via useRef) and only the
- * latest real `value` is appended on subsequent renders, preventing chart
- * flicker when the parent re-renders for unrelated reasons.
+ * Deterministically constructs a stable, pure historical progression from
+ * the facility ID and current value. This avoids any render-phase impure
+ * Math.random calls, useState, or useEffect triggers, eliminating React state
+ * cascading warnings and rendering flicker.
  *
- * @param {{ value: number, max?: number, color?: string }} props
+ * @param {{ id: string, value: number, max?: number, color?: string }} props
  */
-const SparkLine = memo(function SparkLine({ value, max = 30, color = '#3b82f6' }) {
-  // Seed random history once — stable across re-renders
-  const historyRef = useRef(null);
-  if (!historyRef.current) {
+const SparkLine = memo(function SparkLine({ id = 'default', value, max = 30, color = '#3b82f6' }) {
+  const pts = useMemo(() => {
+    // Basic stable string hash to create unique deterministic paths per ID
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash << 5) - hash + id.charCodeAt(i);
+    }
+    hash = Math.abs(hash);
+
     const seed = [];
     let prev = value;
     for (let i = 0; i < 7; i++) {
-      prev = Math.max(1, prev + (Math.random() > 0.5 ? 1 : -1) * Math.round(Math.random() * 4));
+      const step = ((hash + i) % 5) - 2; // -2 to +2 step offset
+      prev = Math.max(1, prev + step);
       seed.push(prev);
     }
-    historyRef.current = seed;
-  }
-
-  // Always show the latest real value as the last point
-  const pts = useMemo(() => [...historyRef.current, value], [value]);
+    return [...seed, value];
+  }, [id, value]);
 
   const h = 28;
   const w = 80;
@@ -186,16 +189,16 @@ function CrowdAnalytics({ zones }) {
 }
 
 /* ─── Wait-time sparkline panel ─────────────────────────────── */
-function WaitSparklines({ items, label, extractor }) {
+function WaitSparklines({ items, extractor }) {
   const sorted = [...items].sort((a, b) => extractor(a) - extractor(b));
   return (
     <div className="flex flex-col gap-2">
-      {sorted.map((item, i) => {
+      {sorted.map((item) => {
         const w = extractor(item);
         return (
           <div key={item.id} className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-gray-600 w-24 truncate">{item.name || item.id}</span>
-            <div className="flex-1"><SparkLine value={w} color={w > 15 ? '#ef4444' : w > 5 ? '#f59e0b' : '#22c55e'}/></div>
+            <div className="flex-1"><SparkLine id={item.id} value={w} color={w > 15 ? '#ef4444' : w > 5 ? '#f59e0b' : '#22c55e'}/></div>
             <span className={`text-[10px] font-black w-8 text-right ${waitText(w)}`}>{w}m</span>
           </div>
         );
@@ -233,32 +236,134 @@ function AlertStrip({ zones, gates, concessions }) {
   );
 }
 
+/* ─── Multilingual Localization dictionary for FIFA World Cup 2026 ─── */
+const TRANSLATIONS = {
+  en: {
+    analyticsTitle: "Analytics & Directory",
+    liveLabel: "Apex Football Stadium · Live",
+    crowdAnalytics: "Crowd Analytics",
+    overallCapacity: "Overall Capacity",
+    seats: "seats",
+    highRiskZones: "High Risk Zones",
+    busiestStand: "Busiest Stand",
+    mostSpace: "Most Space",
+    liveAlerts: "Live Alerts",
+    gatesTitle: "Entry / Exit Gates",
+    waitTrend: "Wait-time trend",
+    concessionsTitle: "Concessions",
+    restroomsTitle: "Restrooms",
+    medicalTitle: "Medical Posts",
+    parkingTitle: "Parking",
+    spotsFree: "spots free",
+    exitMin: "exit",
+    aiRecTitle: "AI Recommendation",
+    safeLimits: "All zones within safe limits",
+    staffTitle: "Operational Decision Support",
+    dispatchSecurity: "Dispatch Security Patrol to East Stand",
+    openGate4: "Open auxiliary Gate G4 (Accessible)",
+    greenTransitTitle: "Transit & Green Goals",
+    transitTitle: "FIFA Express Transit",
+    cupStatus: "Recyclable cups: 88% returned",
+    metroLine: "Metro Line 1: 3 min wait",
+    shuttleLine: "Eco-Shuttle: 5 min wait",
+    fastestExit: "Fastest exit",
+    manageable: "Conditions are manageable.",
+  },
+  es: {
+    analyticsTitle: "Análisis y Directorio",
+    liveLabel: "Estadio de Fútbol Apex · En Vivo",
+    crowdAnalytics: "Análisis de Multitud",
+    overallCapacity: "Capacidad General",
+    seats: "asientos",
+    highRiskZones: "Zonas de Alto Riesgo",
+    busiestStand: "Tribuna Más Concurrida",
+    mostSpace: "Más Espacio",
+    liveAlerts: "Alertas en Vivo",
+    gatesTitle: "Puertas de Entrada / Salida",
+    waitTrend: "Tendencia de tiempo de espera",
+    concessionsTitle: "Concesiones de Comida",
+    restroomsTitle: "Baños Públicos",
+    medicalTitle: "Puestos Médicos",
+    parkingTitle: "Estacionamiento",
+    spotsFree: "lugares libres",
+    exitMin: "salida",
+    aiRecTitle: "Recomendación de IA",
+    safeLimits: "Todas las zonas en límites seguros",
+    staffTitle: "Soporte de Decisión Operativa",
+    dispatchSecurity: "Despachar patrulla de seguridad a Tribuna Este",
+    openGate4: "Abrir puerta auxiliar G4 (Accesible)",
+    greenTransitTitle: "Tránsito y Metas Ecológicas",
+    transitTitle: "Tránsito Expreso FIFA",
+    cupStatus: "Vasos reciclables: 88% devueltos",
+    metroLine: "Línea 1 del Metro: 3 min de espera",
+    shuttleLine: "Eco-Transbordo: 5 min de espera",
+    fastestExit: "Salida más rápida",
+    manageable: "Las condiciones son manejables.",
+  },
+  fr: {
+    analyticsTitle: "Analyses et Répertoire",
+    liveLabel: "Stade de Football Apex · En Direct",
+    crowdAnalytics: "Analyse de la Foule",
+    overallCapacity: "Capacité Globale",
+    seats: "sièges",
+    highRiskZones: "Zones à Haut Risque",
+    busiestStand: "Tribune la Plus Chargée",
+    mostSpace: "Plus d'Espace",
+    liveAlerts: "Alertes en Direct",
+    gatesTitle: "Portes d'Entrée / Sortie",
+    waitTrend: "Tendance du temps d'attente",
+    concessionsTitle: "Concessions Alimentaires",
+    restroomsTitle: "Toilettes",
+    medicalTitle: "Postes Médicaux",
+    parkingTitle: "Parking",
+    spotsFree: "places libres",
+    exitMin: "sortie",
+    aiRecTitle: "Recommandation d'IA",
+    safeLimits: "Toutes les zones sous les limites de risque",
+    staffTitle: "Support aux Décisions Opérationnelles",
+    dispatchSecurity: "Déployer la patrouille de sécurité à la Tribune Est",
+    openGate4: "Ouvrir la porte auxiliaire G4 (Accessible)",
+    greenTransitTitle: "Transit et Objectifs Verts",
+    transitTitle: "Transit Express FIFA",
+    cupStatus: "Gobelets recyclables: 88% retournés",
+    metroLine: "Métro Ligne 1: 3 min d'attente",
+    shuttleLine: "Navette Éco: 5 min d'attente",
+    fastestExit: "Sortie la plus rapide",
+    manageable: "Les conditions sont gérables.",
+  }
+};
+
 /* ─── Main component ─────────────────────────────────────────── */
-export default function WaitTimeDashboard({ isAccessibleFilter }) {
+export default function WaitTimeDashboard({ isAccessibleFilter, language = 'en', isStaffMode = false }) {
   const { venueData, loading, lastUpdated } = useFirestore();
 
-  if (loading || !venueData) return null;
+  // Memoised sorts — placed at the top of the component to follow the rules of hooks
+  const sortedGates = useMemo(() => {
+    if (!venueData) return [];
+    return [...venueData.gates].sort((a, b) => a.wait_minutes - b.wait_minutes);
+  }, [venueData]);
 
-  // Memoised sorts — only recompute when venueData or the filter changes.
-  // Previously these were computed inline in JSX, re-sorting on every render.
-  const sortedGates = useMemo(
-    () => [...venueData.gates].sort((a, b) => a.wait_minutes - b.wait_minutes),
-    [venueData.gates]
-  );
-  const sortedConcessions = useMemo(
-    () => [...venueData.concessions].sort((a, b) => a.wait_minutes - b.wait_minutes),
-    [venueData.concessions]
-  );
-  const sortedRestrooms = useMemo(
-    () => [...venueData.restrooms]
+  const sortedConcessions = useMemo(() => {
+    if (!venueData) return [];
+    return [...venueData.concessions].sort((a, b) => a.wait_minutes - b.wait_minutes);
+  }, [venueData]);
+
+  const sortedRestrooms = useMemo(() => {
+    if (!venueData) return [];
+    return [...venueData.restrooms]
       .filter(r => !isAccessibleFilter || r.accessible !== false)
-      .sort((a, b) => a.wait_minutes - b.wait_minutes),
-    [venueData.restrooms, isAccessibleFilter]
-  );
-  const sortedParking = useMemo(
-    () => [...venueData.parking].sort((a, b) => b.available - a.available),
-    [venueData.parking]
-  );
+      .sort((a, b) => a.wait_minutes - b.wait_minutes);
+  }, [venueData, isAccessibleFilter]);
+
+  const sortedParking = useMemo(() => {
+    if (!venueData) return [];
+    return [...venueData.parking].sort((a, b) => b.available - a.available);
+  }, [venueData]);
+
+  // Translate labels dynamically based on selected language
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+
+  if (loading || !venueData) return null;
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
@@ -266,9 +371,9 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur px-4 py-3 border-b border-gray-100 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-black text-gray-900 tracking-tight">Analytics & Directory</h2>
+            <h2 className="text-base font-black text-gray-900 tracking-tight">{t.analyticsTitle}</h2>
             <p className="text-[9px] text-gray-400 font-medium mt-0.5 uppercase tracking-wider">
-              Apex Football Stadium · Live
+              {t.liveLabel}
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -282,9 +387,28 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
 
       <div className="p-4">
 
+        {/* ── Staff Operations Card (Operational Intelligence Mode) ── */}
+        {isStaffMode && (
+          <div className="bg-orange-50 rounded-2xl p-4 mb-4 border border-orange-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xs font-black text-orange-800 uppercase tracking-widest flex items-center gap-1">
+                🛠️ {t.staffTitle}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button className="w-full py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-colors">
+                🚨 {t.dispatchSecurity}
+              </button>
+              <button className="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors">
+                🚪 {t.openGate4}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Crowd Analytics ── */}
         <SectionCard
-          title="🔥 Crowd Analytics"
+          title={`🔥 ${t.crowdAnalytics}`}
           icon={<BarChart2 className="w-4 h-4 text-orange-500"/>}
         >
           <CrowdAnalytics zones={venueData.zones}/>
@@ -292,7 +416,7 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
 
         {/* ── Live Alerts ── */}
         <SectionCard
-          title="⚡ Live Alerts"
+          title={`⚡ ${t.liveAlerts}`}
           icon={<Zap className="w-4 h-4 text-yellow-500"/>}
         >
           <AlertStrip zones={venueData.zones} gates={venueData.gates} concessions={venueData.concessions}/>
@@ -300,7 +424,7 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
 
         {/* ── Entry / Exit Gates ── */}
         <SectionCard
-          title="Entry / Exit Gates"
+          title={t.gatesTitle}
           icon={<ArrowRightCircle className="w-4 h-4 text-indigo-600"/>}
         >
           <div className="flex flex-col">
@@ -309,14 +433,14 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
             ))}
           </div>
           <div className="mt-3 pt-3 border-t border-gray-50">
-            <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2">Wait-time trend</div>
-            <WaitSparklines items={venueData.gates} label="Gates" extractor={i => i.wait_minutes}/>
+            <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-2">{t.waitTrend}</div>
+            <WaitSparklines items={venueData.gates} extractor={i => i.wait_minutes}/>
           </div>
         </SectionCard>
 
         {/* ── Concessions ── */}
         <SectionCard
-          title="Concessions"
+          title={t.concessionsTitle}
           icon={<Utensils className="w-4 h-4 text-orange-500"/>}
         >
           <div className="flex flex-col">
@@ -328,7 +452,7 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
 
         {/* ── Restrooms ── */}
         <SectionCard
-          title="Restrooms"
+          title={t.restroomsTitle}
           icon={<Droplet className="w-4 h-4 text-blue-500"/>}
         >
           <div className="flex flex-col">
@@ -338,9 +462,27 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
           </div>
         </SectionCard>
 
+        {/* ── Green Transit & Goals (Sustainability & Transport alignment) ── */}
+        <SectionCard
+          title={t.greenTransitTitle}
+          icon={<Car className="w-4 h-4 text-emerald-600"/>}
+        >
+          <div className="flex flex-col gap-2 text-[11px] font-semibold text-gray-700">
+            <div className="flex items-center gap-1.5 text-emerald-700">
+              <span className="text-[9px] px-1 py-0.5 bg-emerald-100 text-emerald-800 rounded font-black">ECO</span>
+              {t.transitTitle}
+            </div>
+            <div className="pl-1 border-l-2 border-emerald-300 flex flex-col gap-1">
+              <div>🚇 {t.metroLine}</div>
+              <div>🚌 {t.shuttleLine}</div>
+              <div className="text-[10px] text-emerald-600 font-bold mt-0.5">🌱 {t.cupStatus}</div>
+            </div>
+          </div>
+        </SectionCard>
+
         {/* ── Medical ── */}
         <SectionCard
-          title="Medical Posts"
+          title={t.medicalTitle}
           icon={<HeartPulse className="w-4 h-4 text-red-500"/>}
         >
           <div className="flex flex-col">
@@ -352,7 +494,7 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
 
         {/* ── Parking ── */}
         <SectionCard
-          title="Parking"
+          title={t.parkingTitle}
           icon={<Car className="w-4 h-4 text-gray-700"/>}
         >
           <div className="flex flex-col">
@@ -366,7 +508,7 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
         <div className="bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl p-4 mb-4 shadow-lg">
           <div className="flex items-center gap-2 mb-2">
             <Navigation className="w-4 h-4 text-blue-300"/>
-            <span className="text-[11px] font-black text-blue-200 uppercase tracking-widest">AI Recommendation</span>
+            <span className="text-[11px] font-black text-blue-200 uppercase tracking-widest">{t.aiRecTitle}</span>
           </div>
           <p className="text-white text-[12px] font-semibold leading-relaxed">
             {(() => {
