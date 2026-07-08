@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { db, trackEvent } from '../services/firebase'; // eslint-disable-line no-unused-vars
 
 /**
- * Seed data representing Apex Arena's real-time venue state.
+ * Seed data representing Apex Football Stadium's real-time venue state.
  * In production, this is replaced with Firestore onSnapshot subscriptions.
  */
 const SEED_DATA = {

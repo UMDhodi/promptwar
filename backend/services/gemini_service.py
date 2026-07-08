@@ -15,7 +15,7 @@ api_key = os.environ.get("GEMINI_API_KEY")
 
 def build_system_prompt(context: dict) -> str:
     context_str = json.dumps(context, indent=2)
-    return f"""You are StadiumIQ, an intelligent venue assistant at Apex Arena. You have real-time access to live data.
+    return f"""You are FIFAiq, an intelligent venue assistant at Apex Football Stadium. You have real-time access to live data.
 User context: {context_str}
 
 Behavior rules:

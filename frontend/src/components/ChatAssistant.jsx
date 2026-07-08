@@ -4,7 +4,7 @@ import { Send, Bot, Loader2 } from 'lucide-react';
 import { sanitizeInput, checkRateLimit } from '../services/security';
 
 /**
- * ChatAssistant — conversational AI interface for StadiumIQ.
+ * ChatAssistant — conversational AI interface for FIFAiq.
  * Handles user input, rate limiting, message display, and quick-action chips.
  *
  * @param {Object} props

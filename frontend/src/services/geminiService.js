@@ -6,7 +6,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIza_MOCK_HACKATHON_KEY"
 export const getGeminiResponse = async (userMessage, userContext) => {
   try {
     const systemInstruction = `
-      You are StadiumSync AI, a smart assistant helping attendees at a sports stadium.
+      You are FIFAiq AI, a smart assistant helping attendees at a sports stadium.
       User Current Seat: ${userContext.seat}
       User Ticket Tier: ${userContext.tier}
       
@@ -50,5 +50,5 @@ const getMockedResponse = async (msg, context) => {
   if (lowerMsg.includes("exit") || lowerMsg.includes("leave")) {
     return "To avoid the crowd, use Gate 1; it has only a 2-minute delay. Gate 2 is heavily congested right now.";
   }
-  return `Hi! I'm your StadiumSync assistant. Your ticket is for ${context.seat}. How can I make your event experience better today?`;
+  return `Hi! I'm your FIFAiq assistant. Your ticket is for ${context.seat}. How can I make your event experience better today?`;
 };
