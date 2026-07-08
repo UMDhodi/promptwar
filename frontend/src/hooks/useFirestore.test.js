@@ -36,7 +36,7 @@ describe('useFirestore', () => {
     await act(async () => {});
 
     const { venueData } = result.current;
-    expect(venueData.name).toBe('Apex Arena');
+    expect(venueData.name).toBe('Apex Football Stadium');
     expect(venueData.total_capacity).toBe(60000);
     expect(Array.isArray(venueData.gates)).toBe(true);
     expect(Array.isArray(venueData.zones)).toBe(true);

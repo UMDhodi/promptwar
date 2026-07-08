@@ -1,62 +1,24 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import { ZoomIn, ZoomOut, Maximize, Navigation, Layers, Flame, Eye } from 'lucide-react';
-
-/* ─────────────────────────────────────────────
-   Colour helpers
-───────────────────────────────────────────── */
-const densityToColor = (pct) => {
-  if (pct >= 90) return { fill: '#ef4444', label: '#fff', ring: '#dc2626' };
-  if (pct >= 75) return { fill: '#f97316', label: '#fff', ring: '#ea580c' };
-  if (pct >= 55) return { fill: '#eab308', label: '#000', ring: '#ca8a04' };
-  return { fill: '#22c55e', label: '#fff', ring: '#16a34a' };
-};
-
-const waitColor = (wait) => {
-  if (typeof wait === 'string') return '#6b7280';
-  if (wait > 15) return '#ef4444';
-  if (wait > 5)  return '#f59e0b';
-  return '#22c55e';
-};
-
-const facilityEmoji = { Gates: '🚪', Concessions: '🍔', Restrooms: '🚻', Medical: '⛑️', Parking: '🅿️' };
-
-/* ─────────────────────────────────────────────
-   Fixed pixel positions for each facility type
-   on a 900×900 canvas (football-stadium layout)
-───────────────────────────────────────────── */
-const POSITIONS = {
-  Gates:       [{ x:450,y:55  }, { x:450,y:845 }, { x:855,y:450 }, { x:45, y:450 }],
-  Concessions: [{ x:360,y:175 }, { x:450,y:755 }, { x:720,y:360 }, { x:180,y:540 }],
-  Restrooms:   [{ x:540,y:175 }, { x:558,y:795 }, { x:720,y:540 }, { x:180,y:360 }],
-  Medical:     [{ x:760,y:140 }, { x:225,y:770 }],
-  Parking:     [{ x:760,y:35  }, { x:140,y:862 }],
-};
-
-const USER_POS = { x: 450, y: 790 };
-
-/* Heatmap "hot-spots" per zone for canvas rendering */
-const ZONE_HOTSPOTS = {
-  Z1: [{ x: 450, y: 120 }, { x: 390, y: 100 }, { x: 510, y: 100 }],
-  Z2: [{ x: 450, y: 775 }, { x: 395, y: 790 }, { x: 505, y: 790 }],
-  Z3: [{ x: 780, y: 450 }, { x: 790, y: 395 }, { x: 790, y: 505 }],
-  Z4: [{ x: 120, y: 450 }, { x: 110, y: 395 }, { x: 110, y: 505 }],
-  Z5: [{ x: 450, y: 450 }],
-};
-
-/* Zone overlay shapes (SVG path data, 900×900 viewBox) */
-const ZONE_PATHS = {
-  Z1: 'M 250 50 Q 450 20 650 50 L 620 200 Q 450 175 280 200 Z',
-  Z2: 'M 280 700 Q 450 725 620 700 L 650 850 Q 450 880 250 850 Z',
-  Z3: 'M 700 280 L 850 250 Q 880 450 850 650 L 700 620 Q 725 450 700 280 Z',
-  Z4: 'M 200 280 Q 175 450 200 620 L 50 650 Q 20 450 50 250 Z',
-};
+import {
+  POSITIONS,
+  USER_POS,
+  ZONE_HOTSPOTS,
+  ZONE_PATHS,
+  ZONE_CENTRES,
+  FACILITY_EMOJI,
+  densityToColor,
+  waitColor
+} from '../constants/venue';
 
 /* ─────────────────────────────────────────────
    Heatmap canvas renderer
 ───────────────────────────────────────────── */
 function HeatmapCanvas({ zones, visible }) {
   const canvasRef = useRef(null);
+
+  const zonesFingerprint = JSON.stringify(zones?.map(z => ({ id: z.id, occ: z.current_occupancy, cap: z.capacity })));
 
   useEffect(() => {
     if (!visible || !canvasRef.current || !zones) return;
@@ -83,7 +45,7 @@ function HeatmapCanvas({ zones, visible }) {
         ctx.fill();
       });
     });
-  }, [zones, visible]);
+  }, [zonesFingerprint, visible]);
 
   return (
     <canvas
@@ -145,7 +107,7 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
   );
 
   /* ── Facility marker ── */
-  const renderMarker = (facility, type, pos) => {
+  const renderMarker = useCallback((facility, type, pos) => {
     if (isAccessibleFilter && type === 'Restrooms' && !facility.accessible) return null;
     const isHighlighted = mapHighlight === facility.id || navigationTarget?.id === facility.id;
     const isOpen        = activePopup?.id === facility.id;
@@ -165,7 +127,7 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
       >
         {isHighlighted && <div className="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-60 scale-150" />}
         <div className="relative text-xl drop-shadow-lg bg-white/95 rounded-full p-1.5 shadow-md border border-gray-200 flex items-center justify-center">
-          {facilityEmoji[type]}
+          {FACILITY_EMOJI[type]}
           <div className="absolute -top-2.5 -right-2 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full border-2 border-white shadow z-40 whitespace-nowrap"
                style={{ backgroundColor: bColor }}>
             {badge}
@@ -190,7 +152,7 @@ export default function VenueMap({ mapHighlight, isAccessibleFilter, isBlocked =
         )}
       </div>
     );
-  };
+  }, [isAccessibleFilter, mapHighlight, navigationTarget, activePopup]);
 
   return (
     <div

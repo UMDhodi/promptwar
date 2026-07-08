@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, memo } from 'react';
 import { useFirestore } from '../hooks/useFirestore';
 import {
   Clock, Utensils, Droplet, ArrowRightCircle, Car, HeartPulse,
@@ -27,23 +27,43 @@ function MiniBar({ pct, color = '#3b82f6' }) {
   );
 }
 
-/* ─── Spark line (last 8 ticks simulated) ────────────────────── */
-function SparkLine({ value, max = 30, color = '#3b82f6' }) {
-  const pts = useMemo(() => {
-    const arr = [value];
-    for (let i = 1; i < 8; i++) arr.unshift(Math.max(1, value + (Math.random() > 0.5 ? 1 : -1) * Math.round(Math.random() * 4)));
-    return arr;
-  }, [value]);
-  const h = 28; const w = 80;
+/**
+ * SparkLine — mini SVG line chart showing the last 8 data ticks.
+ *
+ * The random history is seeded once on mount (via useRef) and only the
+ * latest real `value` is appended on subsequent renders, preventing chart
+ * flicker when the parent re-renders for unrelated reasons.
+ *
+ * @param {{ value: number, max?: number, color?: string }} props
+ */
+const SparkLine = memo(function SparkLine({ value, max = 30, color = '#3b82f6' }) {
+  // Seed random history once — stable across re-renders
+  const historyRef = useRef(null);
+  if (!historyRef.current) {
+    const seed = [];
+    let prev = value;
+    for (let i = 0; i < 7; i++) {
+      prev = Math.max(1, prev + (Math.random() > 0.5 ? 1 : -1) * Math.round(Math.random() * 4));
+      seed.push(prev);
+    }
+    historyRef.current = seed;
+  }
+
+  // Always show the latest real value as the last point
+  const pts = useMemo(() => [...historyRef.current, value], [value]);
+
+  const h = 28;
+  const w = 80;
   const ys = pts.map(v => h - (v / max) * h);
-  const d = pts.map((_, i) => `${i === 0 ? 'M' : 'L'} ${(i / (pts.length - 1)) * w} ${ys[i]}`).join(' ');
+  const d  = pts.map((_, i) => `${i === 0 ? 'M' : 'L'} ${(i / (pts.length - 1)) * w} ${ys[i]}`).join(' ');
+
   return (
-    <svg width={w} height={h} className="overflow-visible">
+    <svg width={w} height={h} className="overflow-visible" aria-hidden="true">
       <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
       <circle cx={w} cy={ys[ys.length - 1]} r="3" fill={color}/>
     </svg>
   );
-}
+});
 
 /* ─── Facility row ───────────────────────────────────────────── */
 function FacilityRow({ item, type, isBest }) {
@@ -219,12 +239,26 @@ export default function WaitTimeDashboard({ isAccessibleFilter }) {
 
   if (loading || !venueData) return null;
 
-  const sortedGates       = [...venueData.gates].sort((a, b) => a.wait_minutes - b.wait_minutes);
-  const sortedConcessions = [...venueData.concessions].sort((a, b) => a.wait_minutes - b.wait_minutes);
-  const sortedRestrooms   = [...venueData.restrooms]
-    .filter(r => !isAccessibleFilter || r.accessible !== false)
-    .sort((a, b) => a.wait_minutes - b.wait_minutes);
-  const sortedParking     = [...venueData.parking].sort((a, b) => b.available - a.available);
+  // Memoised sorts — only recompute when venueData or the filter changes.
+  // Previously these were computed inline in JSX, re-sorting on every render.
+  const sortedGates = useMemo(
+    () => [...venueData.gates].sort((a, b) => a.wait_minutes - b.wait_minutes),
+    [venueData.gates]
+  );
+  const sortedConcessions = useMemo(
+    () => [...venueData.concessions].sort((a, b) => a.wait_minutes - b.wait_minutes),
+    [venueData.concessions]
+  );
+  const sortedRestrooms = useMemo(
+    () => [...venueData.restrooms]
+      .filter(r => !isAccessibleFilter || r.accessible !== false)
+      .sort((a, b) => a.wait_minutes - b.wait_minutes),
+    [venueData.restrooms, isAccessibleFilter]
+  );
+  const sortedParking = useMemo(
+    () => [...venueData.parking].sort((a, b) => b.available - a.available),
+    [venueData.parking]
+  );
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">

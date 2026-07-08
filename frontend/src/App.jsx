@@ -2,6 +2,7 @@ import React, { useState, useEffect, lazy, Suspense, useCallback, memo } from 'r
 import AlertBanner from './components/AlertBanner';
 import AccessibilityToggle from './components/AccessibilityToggle';
 import OnboardingModal from './components/OnboardingModal';
+import ErrorBoundary from './components/ErrorBoundary';
 import { User, MapPin, Loader2 } from 'lucide-react';
 import { signInFrictionless, onAuthChange, trackEvent } from './services/firebase';
 
@@ -11,11 +12,12 @@ const VenueMap = lazy(() => import('./components/VenueMap'));
 const WaitTimeDashboard = lazy(() => import('./components/WaitTimeDashboard'));
 
 /** Minimal full-screen spinner shown while lazy chunks load */
-const SuspenseFallback = () => (
+const SuspenseFallback = memo(() => (
   <div className="flex-1 flex items-center justify-center bg-gray-50">
-    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+    <Loader2 className="w-8 h-8 animate-spin text-blue-500" aria-label="Loading" />
   </div>
-);
+));
+SuspenseFallback.displayName = 'SuspenseFallback';
 
 /** Mobile tab bar button — memoized to avoid unnecessary re-renders */
 const TabButton = memo(({ label, active, onClick }) => (
@@ -84,6 +86,12 @@ function App() {
     if (id) trackEvent('facility_navigate', { facility_id: id });
   }, []);
 
+  // Stable tab-switch handlers — extracted so TabButton onClick never
+  // gets a new function reference on every App render.
+  const showMap       = useCallback(() => setActiveTab('map'),       []);
+  const showAssistant = useCallback(() => setActiveTab('assistant'), []);
+  const showDashboard = useCallback(() => setActiveTab('dashboard'), []);
+
   return (
     <div className="w-full h-screen bg-gray-100 flex flex-col overflow-hidden font-sans">
       {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
@@ -128,32 +136,38 @@ function App() {
 
         {/* LEFT: Chat Assistant */}
         <div className={`md:w-[350px] lg:w-[400px] shrink-0 border-r border-gray-200 z-10 flex flex-col bg-white ${activeTab === 'assistant' ? 'block absolute inset-0' : 'hidden md:flex'}`}>
-          <Suspense fallback={<SuspenseFallback />}>
-            <ChatAssistant userContext={userContext} onMapHighlight={handleMapHighlight} />
-          </Suspense>
+          <ErrorBoundary label="FIFAiq Assistant">
+            <Suspense fallback={<SuspenseFallback />}>
+              <ChatAssistant userContext={userContext} onMapHighlight={handleMapHighlight} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
 
         {/* MIDDLE: Venue Map */}
         <div className={`flex-1 relative ${activeTab === 'map' ? 'block' : 'hidden md:block'}`}>
-          <Suspense fallback={<SuspenseFallback />}>
-            <VenueMap mapHighlight={mapHighlight} isAccessibleFilter={isAccessible} isBlocked={showOnboarding} />
-          </Suspense>
+          <ErrorBoundary label="Stadium Map">
+            <Suspense fallback={<SuspenseFallback />}>
+              <VenueMap mapHighlight={mapHighlight} isAccessibleFilter={isAccessible} isBlocked={showOnboarding} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
 
         {/* RIGHT: Live Directory */}
         <div className={`md:w-[320px] shrink-0 border-l border-gray-200 z-10 flex flex-col bg-white ${activeTab === 'dashboard' ? 'block absolute inset-0' : 'hidden md:flex'}`}>
-          <Suspense fallback={<SuspenseFallback />}>
-            <WaitTimeDashboard isAccessibleFilter={isAccessible} />
-          </Suspense>
+          <ErrorBoundary label="Analytics & Directory">
+            <Suspense fallback={<SuspenseFallback />}>
+              <WaitTimeDashboard isAccessibleFilter={isAccessible} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
 
       </div>
 
       {/* Mobile Tab Bar */}
       <div className="md:hidden flex shrink-0 border-t border-gray-200 bg-white">
-        <TabButton label="MAP" active={activeTab === 'map'} onClick={() => setActiveTab('map')} />
-        <TabButton label="ASSISTANT" active={activeTab === 'assistant'} onClick={() => setActiveTab('assistant')} />
-        <TabButton label="DIRECTORY" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+        <TabButton label="MAP"       active={activeTab === 'map'}       onClick={showMap} />
+        <TabButton label="ASSISTANT" active={activeTab === 'assistant'} onClick={showAssistant} />
+        <TabButton label="DIRECTORY" active={activeTab === 'dashboard'} onClick={showDashboard} />
       </div>
     </div>
   );

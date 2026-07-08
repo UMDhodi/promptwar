@@ -58,6 +58,14 @@ export function validateSeatInput(seat) {
  */
 export function checkRateLimit(key = 'local', maxRequests = 10, windowMs = 60000) {
   const now = Date.now();
+
+  // Prune expired entries to prevent memory leaks
+  for (const [k, record] of rateLimitStore.entries()) {
+    if (now - record.windowStart > windowMs) {
+      rateLimitStore.delete(k);
+    }
+  }
+
   const record = rateLimitStore.get(key) || { count: 0, windowStart: now };
 
   if (now - record.windowStart > windowMs) {

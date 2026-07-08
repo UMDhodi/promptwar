@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { db } from '../services/firebase';
-import { trackEvent } from '../services/firebase';
+import { db, trackEvent } from '../services/firebase'; // eslint-disable-line no-unused-vars
 
 /**
  * Seed data representing Apex Arena's real-time venue state.
@@ -49,9 +48,30 @@ const SEED_DATA = {
 /**
  * Applies bounded random mutation to a wait_minutes value.
  * Ensures values never drop below a minimum realistic threshold.
+ * @param {number} current
+ * @param {number} [min=1]
+ * @param {number} [max=30]
+ * @returns {number}
  */
 const mutateWait = (current, min = 1, max = 30) =>
   Math.max(min, Math.min(max, current + Math.floor(Math.random() * 6) - 2));
+
+/**
+ * Returns a stable JSON fingerprint of only the fields that drive UI.
+ * Used to skip setVenueData when the new values are identical to the old,
+ * preventing unnecessary heatmap canvas redraws.
+ * @param {object} data
+ * @returns {string}
+ */
+function venueFingerprint(data) {
+  return JSON.stringify({
+    gates:       data.gates?.map(g => g.wait_minutes),
+    concessions: data.concessions?.map(c => c.wait_minutes),
+    restrooms:   data.restrooms?.map(r => r.wait_minutes),
+    zones:       data.zones?.map(z => z.current_occupancy),
+    parking:     data.parking?.map(p => p.available),
+  });
+}
 
 /**
  * Custom hook that provides real-time venue data.
@@ -68,23 +88,26 @@ export function useFirestore() {
   const applySimulatedUpdate = useCallback(() => {
     setVenueData(prev => {
       if (!prev) return prev;
-      return {
+      const next = {
         ...prev,
-        gates: prev.gates.map(g => ({ ...g, wait_minutes: mutateWait(g.wait_minutes, 1, 20) })),
+        gates:       prev.gates.map(g => ({ ...g, wait_minutes: mutateWait(g.wait_minutes, 1, 20) })),
         concessions: prev.concessions.map(c => ({ ...c, wait_minutes: mutateWait(c.wait_minutes, 2, 25) })),
-        restrooms: prev.restrooms.map(r => ({ ...r, wait_minutes: mutateWait(r.wait_minutes, 1, 20) })),
-        zones: prev.zones.map(z => ({
+        restrooms:   prev.restrooms.map(r => ({ ...r, wait_minutes: mutateWait(r.wait_minutes, 1, 20) })),
+        zones:       prev.zones.map(z => ({
           ...z,
           current_occupancy: Math.max(0, Math.min(z.capacity,
             z.current_occupancy + Math.floor((Math.random() * 0.08 - 0.04) * z.capacity)
-          ))
+          )),
         })),
         parking: prev.parking.map(p => ({
           ...p,
-          available: Math.max(0, p.available + Math.floor(Math.random() * 40) - 20),
-          wait_minutes_to_exit: mutateWait(p.wait_minutes_to_exit, 1, 40)
-        }))
+          available:            Math.max(0, p.available + Math.floor(Math.random() * 40) - 20),
+          wait_minutes_to_exit: mutateWait(p.wait_minutes_to_exit, 1, 40),
+        })),
       };
+      // Skip state update (and downstream canvas redraws) if nothing changed
+      if (venueFingerprint(next) === venueFingerprint(prev)) return prev;
+      return next;
     });
     setLastUpdated(new Date());
     trackEvent('venue_data_refresh', { source: 'simulation' });
