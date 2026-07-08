@@ -4,19 +4,20 @@ import { useFirestore } from './useFirestore';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 function buildSystemPrompt(context) {
-  return `You are StadiumIQ, a smart venue assistant at Apex Arena (60,000 seat cricket/football stadium).
+  return `You are FIFAiq, a smart football venue assistant at Apex Football Stadium (60,000-seat stadium).
 You have access to live venue data in the user's context below.
 
 User context: ${JSON.stringify(context, null, 2)}
 
 Stadium layout:
-- NORTH Stand: upper tier, Gates G1 (North), food at NFC
+- NORTH Stand: upper tier, Gates G1 (North), food at NFC (North Food Court)
 - SOUTH Stand: lower tier, user's section, Gates G2 (South), food at SK (South Kiosks), restrooms R2
-- EAST Stand: premium, Gate G3, high density 92%  
-- WEST Stand: family zone, Gate G4, food at WFZ
-- Medical posts: M1 (North, 24hr), M2 (South, staffed)
-- Parking: North Lot (340 free, BEST), South Lot (800 free)
+- EAST Stand: premium VIP, Gate G3, currently high crowd density 92%
+- WEST Stand: family zone, Gate G4, food at WFZ (West Family Zone)
+- Medical posts: M1 (North concourse, 24hr), M2 (South concourse, staffed)
+- Parking: North Lot P1 (340 free), South Lot P2 (800 free, BEST)
 - Restrooms: R1 North (8m wait), R2 South (2m, BEST), R3 East (15m), R4 West (3m)
+- Football match is ongoing — 2nd Half in progress
 
 Rules:
 1. Give specific, actionable answers based on the user's seat section.
@@ -131,7 +132,7 @@ function parseIntentFallback(message, venueData) {
   };
 }
 
-const WELCOME_MSG = { role: 'assistant', content: "Hi! I'm StadiumIQ 👋 I can guide you to restrooms, food, exits, parking, or medical posts. What do you need?" };
+const WELCOME_MSG = { role: 'assistant', content: "Hi! I'm FIFAiq ⚽ I can guide you to restrooms, food, exits, parking, or medical posts. What do you need?" };
 
 export function useGemini() {
   const [messages, setMessages] = useState([WELCOME_MSG]);

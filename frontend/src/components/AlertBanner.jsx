@@ -9,9 +9,10 @@ export default function AlertBanner() {
   useEffect(() => {
      // Mocking Alerts to show carousel functionality
      setAlerts([
-        { id: "A1", type: "GATE_DELAY", message: "North Gate experiencing 20 min delay due to security queue." },
-        { id: "A2", type: "CROWD_HIGH", message: "Zone 1 Concourse is heavily congested. Use alternate routes." },
-        { id: "A3", type: "EVENT_UPDATE", message: "Match resumes in 5 minutes! Return to your seats." }
+         { id: "A1", type: "GATE_DELAY", message: "North Gate experiencing 20 min delay — use West Gate for faster entry." },
+         { id: "A2", type: "CROWD_HIGH", message: "East Premium Stand is at 92% capacity. West Family Zone has space!" },
+         { id: "A3", type: "EVENT_UPDATE", message: "⚽ 2nd Half kicks off in 3 minutes — return to your seats!" },
+         { id: "A4", type: "EVENT_UPDATE", message: "Concessions on North concourse closing 10 mins before final whistle." }
      ]);
   }, []);
 

@@ -40,10 +40,10 @@ export default function OnboardingModal({ onComplete }) {
       <div className="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md shadow-2xl">
         <div className="flex justify-center mb-4">
           <div
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center font-bold text-2xl text-white shadow-inner"
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center font-bold text-3xl text-white shadow-inner"
             aria-hidden="true"
           >
-            IQ
+            ⚽
           </div>
         </div>
 
@@ -51,7 +51,7 @@ export default function OnboardingModal({ onComplete }) {
           id="onboarding-title"
           className="text-2xl font-bold text-center text-gray-900 mb-1"
         >
-          Welcome to Apex Arena!
+          FIFAiq — Apex Football Stadium
         </h2>
         <p
           id="onboarding-description"
@@ -71,7 +71,7 @@ export default function OnboardingModal({ onComplete }) {
             <input
               id="seat-input"
               type="text"
-              placeholder="e.g. Z2, 104, South Stand"
+              placeholder="e.g. Z2, Block 104, South Stand"
               className={`w-full bg-gray-50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 border transition-all text-sm ${
                 error ? 'border-red-400 focus:ring-red-400/50' : 'border-gray-200'
               }`}
@@ -111,7 +111,7 @@ export default function OnboardingModal({ onComplete }) {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition-all mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             aria-label="Enter stadium and start navigation"
           >
-            Enter Stadium
+            Enter Stadium ⚽
           </button>
         </form>
       </div>

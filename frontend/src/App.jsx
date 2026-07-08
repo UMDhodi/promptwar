@@ -93,20 +93,20 @@ function App() {
       {/* Top Navigation Bar */}
       <header className="bg-blue-900 text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-md z-20">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center font-bold text-lg shadow-inner">
-            IQ
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center font-bold text-lg shadow-inner">
+            ⚽
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-lg font-bold leading-tight">StadiumIQ</h1>
-            <p className="text-[10px] text-blue-200 font-medium tracking-wide uppercase">Apex Arena</p>
+            <h1 className="text-lg font-bold leading-tight">FIFAiq</h1>
+            <p className="text-[10px] text-green-200 font-medium tracking-wide uppercase">Apex Football Stadium</p>
           </div>
         </div>
 
         <div className="flex-1 text-center hidden md:flex flex-col items-center justify-center">
           <span className="text-sm font-bold opacity-90">
-            <span className="text-red-400 font-black">LIVE</span> | Cricket Match • 2nd Innings
+            <span className="text-red-400 font-black">LIVE</span> | Football Match • 2nd Half
           </span>
-          <span className="text-xs text-blue-200 font-mono tracking-widest mt-0.5 opacity-80">14:32 REMAINING</span>
+          <span className="text-xs text-blue-200 font-mono tracking-widest mt-0.5 opacity-80">38:15 REMAINING</span>
         </div>
 
         <div className="flex items-center space-x-3 h-full">

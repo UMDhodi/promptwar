@@ -64,8 +64,8 @@ export default function ChatAssistant({ userContext, onMapHighlight }) {
 
   const chips = suggestedActions?.length > 0 ? suggestedActions : [
     { label: '🍔 Nearest Food', query: 'Where is the nearest food concession with the shortest wait?' },
-    { label: '🚻 Find Restrooms', query: 'Where are the closest restrooms?' },
     { label: '🚪 Best Exit', query: 'What is the fastest gate to exit from my seat?' },
+    { label: '🚨 Crowd Status', query: 'Which zones are the most crowded right now?' },
     { label: '🅿️ Parking', query: "What's the wait time for parking exits?" },
     { label: '⛑️ Medical Help', query: 'Where is the nearest medical post?' }
   ];
@@ -80,7 +80,7 @@ export default function ChatAssistant({ userContext, onMapHighlight }) {
       <div className="bg-gradient-to-r from-blue-900 to-blue-800 p-4 shrink-0 shadow-sm z-10 hidden md:block">
         <h2 className="text-lg font-black text-white flex items-center">
           <Bot className="w-5 h-5 mr-2 opacity-90" aria-hidden="true" />
-          Stadium Assistant
+          FIFAiq Assistant
         </h2>
       </div>
 
@@ -108,7 +108,7 @@ export default function ChatAssistant({ userContext, onMapHighlight }) {
                 {!isUser && (
                   <div className="flex items-center text-blue-600 font-black mb-1 text-[10px] uppercase tracking-wider">
                     <Bot className="w-3 h-3 mr-1" aria-hidden="true" />
-                    Stadium IQ
+                    FIFAiq
                   </div>
                 )}
                 {msg.content}
@@ -168,14 +168,14 @@ export default function ChatAssistant({ userContext, onMapHighlight }) {
           aria-label="Send a message to Stadium Assistant"
         >
           <label htmlFor="chat-input" className="sr-only">
-            Ask something about Apex Arena
+          Ask something about Apex Football Stadium
           </label>
           <input
             id="chat-input"
             ref={inputRef}
             className="flex-1 w-full bg-gray-50 rounded-2xl pl-4 pr-12 py-3.5 outline-none focus:ring-2 focus:ring-blue-500/50 border border-gray-200 focus:bg-white transition-all text-[13px]"
             type="text"
-            placeholder="Ask anything about Apex Arena..."
+            placeholder="Ask anything about Apex Football Stadium..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={handleKeyDown}

@@ -7,22 +7,22 @@ import { trackEvent } from '../services/firebase';
  * In production, this is replaced with Firestore onSnapshot subscriptions.
  */
 const SEED_DATA = {
-  name: "Apex Arena",
+  name: "Apex Football Stadium",
   total_capacity: 60000,
   center_lat: 28.6139,
   center_lng: 77.2090,
   gates: [
-    { id: "G1", name: "North Gate", type: "main", wait_minutes: 7, lat: 28.6155, lng: 77.2090 },
-    { id: "G2", name: "South Gate", type: "main", wait_minutes: 3, lat: 28.6123, lng: 77.2090 },
-    { id: "G3", name: "East Gate", type: "premium", wait_minutes: 14, lat: 28.6139, lng: 77.2112 },
-    { id: "G4", name: "West Gate", type: "accessible", wait_minutes: 5, lat: 28.6139, lng: 77.2068 }
+    { id: "G1", name: "North Gate", type: "main",      wait_minutes: 7,  lat: 28.6155, lng: 77.2090 },
+    { id: "G2", name: "South Gate", type: "main",      wait_minutes: 3,  lat: 28.6123, lng: 77.2090 },
+    { id: "G3", name: "East Gate",  type: "premium",   wait_minutes: 14, lat: 28.6139, lng: 77.2112 },
+    { id: "G4", name: "West Gate",  type: "accessible",wait_minutes: 5,  lat: 28.6139, lng: 77.2068 }
   ],
   zones: [
-    { id: "Z1", name: "North Stand", capacity: 15000, current_occupancy: 10800 },
-    { id: "Z2", name: "South Stand", capacity: 15000, current_occupancy: 9000 },
-    { id: "Z3", name: "East Premium", capacity: 10000, current_occupancy: 9200 },
-    { id: "Z4", name: "West Family", capacity: 10000, current_occupancy: 5500 },
-    { id: "Z5", name: "Concourse Level", capacity: 10000, current_occupancy: 4500 }
+    { id: "Z1", name: "North Stand",    capacity: 15000, current_occupancy: 10800 },
+    { id: "Z2", name: "South Stand",    capacity: 15000, current_occupancy: 9000  },
+    { id: "Z3", name: "East Premium",   capacity: 10000, current_occupancy: 9200  },
+    { id: "Z4", name: "West Family",    capacity: 10000, current_occupancy: 5500  },
+    { id: "Z5", name: "Concourse",      capacity: 10000, current_occupancy: 4500  }
   ],
   concessions: [
     { id: "C1", name: "North Food Court", zone: "Z1", wait_minutes: 12, lat: 28.6150, lng: 77.2085 },
